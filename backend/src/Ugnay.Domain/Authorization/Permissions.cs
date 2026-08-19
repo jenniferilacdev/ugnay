@@ -24,9 +24,11 @@ public static class Permissions
     public const string OfficialUpdate = "official.update";
     public const string OfficialArchive = "official.archive";
 
-    // Registrations (spec §12)
-    public const string RegistrationView = "registration.view";
-    public const string RegistrationProcess = "registration.process";
+    // Requests — reusable workflow engine (spec §31, §37)
+    public const string RequestView = "request.view";
+    public const string RequestCreate = "request.create";
+    public const string RequestReview = "request.review";
+    public const string RequestApprove = "request.approve";
 
     // Households (spec §33)
     public const string HouseholdView = "household.view";
@@ -69,8 +71,10 @@ public static class Permissions
         new(OfficialCreate, "official", "create", "Create officials"),
         new(OfficialUpdate, "official", "update", "Update officials"),
         new(OfficialArchive, "official", "archive", "Archive officials"),
-        new(RegistrationView, "registration", "view", "View resident registrations"),
-        new(RegistrationProcess, "registration", "process", "Approve or reject registrations"),
+        new(RequestView, "request", "view", "View requests"),
+        new(RequestCreate, "request", "create", "Create and submit requests"),
+        new(RequestReview, "request", "review", "Review, assign, process, and complete requests"),
+        new(RequestApprove, "request", "approve", "Approve or reject requests"),
         new(HouseholdView, "household", "view", "View households"),
         new(HouseholdCreate, "household", "create", "Create households"),
         new(HouseholdUpdate, "household", "update", "Update households and members"),

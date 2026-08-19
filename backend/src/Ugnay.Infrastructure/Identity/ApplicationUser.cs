@@ -18,11 +18,4 @@ public class ApplicationUser : IdentityUser<Guid>
     public UserStatus Status { get; set; } = UserStatus.Active;
 
     public DateTimeOffset CreatedAtUtc { get; set; }
-
-    /// <summary>
-    /// The resident identity this account represents, if any (spec §11). The account
-    /// is permanent and separate from the resident record; this is the link between
-    /// them. Null for staff/platform accounts.
-    /// </summary>
-    public Guid? ResidentId { get; set; }
 }

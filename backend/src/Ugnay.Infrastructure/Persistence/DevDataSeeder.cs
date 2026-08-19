@@ -5,25 +5,48 @@ using Ugnay.Domain.Tenants;
 namespace Ugnay.Infrastructure.Persistence;
 
 /// <summary>
-/// Idempotent development-only seed data: one LGU tenant with a small
-/// organization hierarchy (city → barangays → puroks) so the app has something
-/// to display. Safe to run repeatedly; only inserts what is missing.
+/// Idempotent development-only seed data: a province tenant with a small
+/// organization hierarchy (province → city → barangays → puroks) so the app has
+/// something to display. Safe to run repeatedly; only inserts what is missing.
 /// Never runs in Production.
 /// </summary>
 public static class DevDataSeeder
 {
     public static async Task SeedAsync(AppDbContext db, CancellationToken ct = default)
     {
-        // --- Tenant ---------------------------------------------------------
-        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Slug == "tuguegarao", ct);
+        // --- Tenant (province deployment) -----------------------------------
+        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Slug == "cagayan", ct);
         if (tenant is null)
         {
-            tenant = new Tenant { Name = "Tuguegarao City", Slug = "tuguegarao", IsActive = true };
+            tenant = new Tenant { Name = "Province of Cagayan", Slug = "cagayan", IsActive = true };
             db.Tenants.Add(tenant);
             await db.SaveChangesAsync(ct);
         }
 
-        // --- Top-level LGU (City) -------------------------------------------
+        // --- Top-level Province ---------------------------------------------
+        var province = await db.Organizations
+            .FirstOrDefaultAsync(o => o.TenantId == tenant.Id && o.Slug == "cagayan", ct);
+        if (province is null)
+        {
+            province = new Organization
+            {
+                TenantId = tenant.Id,
+                Type = OrganizationType.Province,
+                Code = "PROV-CAG",
+                Slug = "cagayan",
+                Name = "Province of Cagayan",
+                Settings = new OrganizationSettings
+                {
+                    Province = "Cagayan",
+                    Region = "Region II (Cagayan Valley)",
+                    Timezone = "Asia/Manila",
+                },
+            };
+            db.Organizations.Add(province);
+            await db.SaveChangesAsync(ct);
+        }
+
+        // --- City under the province ----------------------------------------
         var city = await db.Organizations
             .FirstOrDefaultAsync(o => o.TenantId == tenant.Id && o.Slug == "tuguegarao", ct);
         if (city is null)
@@ -31,13 +54,13 @@ public static class DevDataSeeder
             city = new Organization
             {
                 TenantId = tenant.Id,
+                ParentOrganizationId = province.Id,
                 Type = OrganizationType.City,
                 Code = "CITY-TUG",
                 Slug = "tuguegarao",
                 Name = "Tuguegarao City",
                 Settings = new OrganizationSettings
                 {
-                    PortalName = "City Government of Tuguegarao",
                     Province = "Cagayan",
                     Region = "Region II (Cagayan Valley)",
                     Timezone = "Asia/Manila",

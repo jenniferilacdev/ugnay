@@ -122,16 +122,30 @@ them as an explicit, separate deploy step.
   transfer (§14), safe reference numbering (§41), sensitive-field gating (§25/§92).
 - **Households** — `Household` + `HouseholdMember` (relationships, head, status),
   add/remove/change-head preserving history (§33–34).
-- **Registration & linking** — public self-registration from barangay portals →
-  resident-match suggestions → staff approve (create/link resident) or reject;
-  account↔resident link schema (§11–12).
 - All writes CSRF-protected, organization-scope enforced, and audited with the actor.
 
-## Roadmap (next)
+## Scope: officials-only, three levels
 
-- **Phase 3** — Reusable workflow foundation (requests, approval workflow, tasks,
-  internal notes, activity timelines, notifications) before the service modules.
+UGNAY is an **internal system for government officials** — residents are records
+managed by staff, not users. There is **no resident sign-in, self-registration, or
+public portal**. A single `/login` recognizes each account's level from its
+organization scope. Organization hierarchy and account levels:
+
+```
+Province → City / Municipality → Barangay
+```
+
+An account scoped at a level sees everything beneath it.
+
+## In progress — Phase 3 (Workflow foundation)
+
+- **Requests & approval workflow (3A, done)** — reusable internal request engine
+  (categories, lifecycle, timeline) with a shared approval state machine (§31, §37).
+- Next: Tasks, internal notes, activity timelines, notifications — before the
+  service modules (certificates, programs, …).
+
+## Roadmap (next)
 - Later phases per the product specification (certificates, programs, assets,
   communications, reports, intelligence).
 
-> Configurable · Secure · Auditable · Historical · Connected · Resident-centered.
+> Configurable · Secure · Auditable · Historical · Connected · Official-operated.

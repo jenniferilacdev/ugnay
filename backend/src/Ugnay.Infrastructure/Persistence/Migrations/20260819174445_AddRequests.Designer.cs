@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Ugnay.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Ugnay.Infrastructure.Persistence;
 namespace Ugnay.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819174445_AddRequests")]
+    partial class AddRequests
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -883,6 +886,132 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.ToTable("puroks", (string)null);
                 });
 
+            modelBuilder.Entity("Ugnay.Domain.Registrations.ResidentRegistration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("address");
+
+                    b.Property<DateOnly?>("BirthDate")
+                        .HasColumnType("date")
+                        .HasColumnName("birth_date");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("contact_email");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("contact_phone");
+
+                    b.Property<bool>("ContactVerified")
+                        .HasColumnType("boolean")
+                        .HasColumnName("contact_verified");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
+
+                    b.Property<Guid?>("MatchedResidentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matched_resident_id");
+
+                    b.Property<string>("MiddleName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("middle_name");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("ReferenceNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("reference_number");
+
+                    b.Property<Guid?>("ResultResidentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("result_resident_id");
+
+                    b.Property<string>("ReviewRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("review_remarks");
+
+                    b.Property<DateTimeOffset?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at_utc");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_user_id");
+
+                    b.Property<string>("Sex")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("sex");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Suffix")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("suffix");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_resident_registrations");
+
+                    b.HasIndex("OrganizationId", "Status")
+                        .HasDatabaseName("ix_resident_registrations_organization_id_status");
+
+                    b.HasIndex("TenantId", "ReferenceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_resident_registrations_tenant_id_reference_number");
+
+                    b.ToTable("resident_registrations", (string)null);
+                });
+
             modelBuilder.Entity("Ugnay.Domain.Requests.Request", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1387,6 +1516,10 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("phone_number_confirmed");
 
+                    b.Property<Guid?>("ResidentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resident_id");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text")
                         .HasColumnName("security_stamp");
@@ -1419,6 +1552,10 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("ResidentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_asp_net_users_resident_id");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_asp_net_users_tenant_id");
@@ -1619,6 +1756,18 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_puroks_organizations_barangay_organization_id");
 
                     b.Navigation("BarangayOrganization");
+                });
+
+            modelBuilder.Entity("Ugnay.Domain.Registrations.ResidentRegistration", b =>
+                {
+                    b.HasOne("Ugnay.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_resident_registrations_organizations_organization_id");
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Ugnay.Domain.Requests.Request", b =>

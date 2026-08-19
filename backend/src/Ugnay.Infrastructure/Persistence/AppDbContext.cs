@@ -8,7 +8,7 @@ using Ugnay.Domain.Common;
 using Ugnay.Domain.Households;
 using Ugnay.Domain.Officials;
 using Ugnay.Domain.Organizations;
-using Ugnay.Domain.Registrations;
+using Ugnay.Domain.Requests;
 using Ugnay.Domain.Residents;
 using Ugnay.Domain.Tenants;
 using Ugnay.Infrastructure.Identity;
@@ -42,7 +42,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Household> Households => Set<Household>();
     public DbSet<HouseholdMember> HouseholdMembers => Set<HouseholdMember>();
 
-    public DbSet<ResidentRegistration> ResidentRegistrations => Set<ResidentRegistration>();
+    public DbSet<Request> Requests => Set<Request>();
+    public DbSet<RequestEvent> RequestEvents => Set<RequestEvent>();
 
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();

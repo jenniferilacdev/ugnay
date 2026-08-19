@@ -27,7 +27,8 @@ public static class IdentitySeeder
              Permissions.OrganizationArchive, Permissions.PurokView, Permissions.PurokManage,
              Permissions.OfficialView, Permissions.OfficialCreate, Permissions.OfficialUpdate,
              Permissions.OfficialArchive, Permissions.ResidentView, Permissions.ResidentViewSensitive,
-             Permissions.ResidentExport, Permissions.HouseholdView, Permissions.RegistrationView,
+             Permissions.ResidentExport, Permissions.HouseholdView,
+             Permissions.RequestView,
              Permissions.UserView, Permissions.UserManage, Permissions.RoleView]),
 
         ("barangay-admin", "Barangay Admin", "Single-barangay administration (spec §19)",
@@ -38,21 +39,23 @@ public static class IdentitySeeder
              Permissions.ResidentArchive, Permissions.ResidentRestore, Permissions.ResidentTransfer,
              Permissions.ResidentExport, Permissions.HouseholdView, Permissions.HouseholdCreate,
              Permissions.HouseholdUpdate, Permissions.HouseholdArchive,
-             Permissions.RegistrationView, Permissions.RegistrationProcess,
+             Permissions.RequestView, Permissions.RequestCreate, Permissions.RequestReview,
+             Permissions.RequestApprove,
              Permissions.UserView, Permissions.UserManage, Permissions.RoleView]),
 
         ("barangay-secretary", "Barangay Secretary", "Records and documentation (spec §20)",
             [Permissions.OrganizationView, Permissions.PurokView, Permissions.OfficialView,
              Permissions.ResidentView, Permissions.ResidentViewSensitive, Permissions.ResidentCreate,
              Permissions.ResidentUpdate, Permissions.HouseholdView, Permissions.HouseholdCreate,
-             Permissions.HouseholdUpdate, Permissions.RegistrationView, Permissions.RegistrationProcess,
+             Permissions.HouseholdUpdate,
+             Permissions.RequestView, Permissions.RequestCreate, Permissions.RequestReview,
              Permissions.UserView]),
 
         ("encoder", "Encoder", "Data entry, no approval or role management (spec §20)",
             [Permissions.OrganizationView, Permissions.PurokView, Permissions.OfficialView,
              Permissions.ResidentView, Permissions.ResidentCreate, Permissions.ResidentUpdate,
              Permissions.HouseholdView, Permissions.HouseholdCreate, Permissions.HouseholdUpdate,
-             Permissions.RegistrationView]),
+             Permissions.RequestView, Permissions.RequestCreate]),
     ];
 
     public static async Task SeedAsync(
@@ -131,9 +134,10 @@ public static class IdentitySeeder
         if (await userManager.FindByEmailAsync(email) is not null)
             return;
 
-        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Slug == "tuguegarao", ct);
-        var cityOrg = await db.Organizations
-            .FirstOrDefaultAsync(o => o.Slug == "tuguegarao" && o.ParentOrganizationId == null, ct);
+        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Slug == "cagayan", ct);
+        // Scope the dev admin at the top-level org (the province) so they see everything below.
+        var topOrg = tenant is null ? null : await db.Organizations
+            .FirstOrDefaultAsync(o => o.TenantId == tenant.Id && o.ParentOrganizationId == null, ct);
 
         var user = new ApplicationUser
         {
@@ -156,12 +160,12 @@ public static class IdentitySeeder
         var superAdminRole = await db.Roles.FirstAsync(r => r.TenantId == null && r.Key == "super-admin", ct);
         db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = superAdminRole.Id });
 
-        if (cityOrg is not null)
+        if (topOrg is not null)
         {
             db.UserOrganizationScopes.Add(new UserOrganizationScope
             {
                 UserId = user.Id,
-                OrganizationId = cityOrg.Id,
+                OrganizationId = topOrg.Id,
                 IncludesDescendants = true,
             });
         }

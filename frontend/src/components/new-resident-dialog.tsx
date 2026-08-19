@@ -90,8 +90,7 @@ export function NewResidentDialog() {
         <DialogHeader>
           <DialogTitle>New resident</DialogTitle>
           <DialogDescription>
-            Registration is not proof of residency; new residents start as Pending
-            and require verification (spec §12–13).
+            New residents start as Pending and require verification (spec §13).
           </DialogDescription>
         </DialogHeader>
 

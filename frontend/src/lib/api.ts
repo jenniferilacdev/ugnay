@@ -93,7 +93,7 @@ export interface Purok {
 
 export interface OrganizationNode {
   id: string;
-  type: "City" | "Municipality" | "Barangay";
+  type: "Province" | "City" | "Municipality" | "Barangay";
   code: string;
   slug: string;
   name: string;
@@ -312,82 +312,71 @@ export const removeHouseholdMember = (householdId: string, memberId: string) =>
 export const changeHouseholdHead = (householdId: string, memberId: string) =>
   apiPost<void>(`/api/households/${householdId}/head`, { memberId }, { csrf: true });
 
-// --- Registrations (public submit + staff review, spec §12) -----------------
+// --- Requests / workflow (spec §31, §37) ------------------------------------
 
-export interface RegisterInput {
-  firstName: string;
-  middleName?: string | null;
-  lastName: string;
-  sex?: string | null;
-  birthDate?: string | null;
-  contactEmail?: string | null;
-  contactPhone?: string | null;
-  address?: string | null;
-}
-
-/** Public, unauthenticated registration submission from a barangay portal. */
-export const submitRegistration = (
-  lguSlug: string,
-  barangaySlug: string,
-  input: RegisterInput,
-) =>
-  apiPost<{ referenceNumber: string }>(
-    `/api/portal/${encodeURIComponent(lguSlug)}/${encodeURIComponent(barangaySlug)}/register`,
-    input,
-  );
-
-export interface RegistrationSummary {
+export interface RequestSummary {
   id: string;
   referenceNumber: string;
-  fullName: string;
-  barangay: string;
+  category: string;
+  title: string;
   status: string;
+  priority: string;
+  resident: string | null;
   createdAtUtc: string;
 }
 
-export interface ResidentMatch {
+export interface RequestEvent {
   id: string;
-  referenceNumber: string;
-  fullName: string;
-  birthDate: string | null;
-  verificationStatus: string;
+  type: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actorName: string | null;
+  remarks: string | null;
+  createdAtUtc: string;
 }
 
-export interface RegistrationDetail {
+export interface RequestDetail {
   id: string;
   referenceNumber: string;
-  firstName: string;
-  middleName: string | null;
-  lastName: string;
-  suffix: string | null;
-  sex: string;
-  birthDate: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-  address: string | null;
-  barangay: string;
+  category: string;
+  title: string;
+  description: string | null;
   status: string;
-  reviewRemarks: string | null;
-  resultResidentId: string | null;
-  matches: ResidentMatch[];
+  priority: string;
+  organization: string;
+  resident: string | null;
+  assignedToUserId: string | null;
+  createdAtUtc: string;
+  completedAtUtc: string | null;
+  availableActions: string[];
+  timeline: RequestEvent[];
 }
 
-export const getRegistrations = (status = "Submitted", signal?: AbortSignal) =>
-  apiGet<RegistrationSummary[]>(
-    `/api/registrations?status=${encodeURIComponent(status)}`,
+export interface CreateRequestInput {
+  organizationId: string;
+  category: string;
+  title: string;
+  description?: string | null;
+  requestedByResidentId?: string | null;
+  priority?: string | null;
+}
+
+export const getRequests = (status?: string, signal?: AbortSignal) =>
+  apiGet<RequestSummary[]>(
+    `/api/requests${status ? `?status=${encodeURIComponent(status)}` : ""}`,
     signal,
   );
 
-export const getRegistration = (id: string, signal?: AbortSignal) =>
-  apiGet<RegistrationDetail>(`/api/registrations/${id}`, signal);
+export const getRequest = (id: string, signal?: AbortSignal) =>
+  apiGet<RequestDetail>(`/api/requests/${id}`, signal);
 
-export const approveRegistration = (
+export const createRequest = (input: CreateRequestInput) =>
+  apiPost<{ id: string; referenceNumber: string }>("/api/requests", input, { csrf: true });
+
+export const transitionRequest = (
   id: string,
-  input: { residentId?: string | null; remarks?: string | null },
-) => apiPost<{ resultResidentId: string }>(`/api/registrations/${id}/approve`, input, { csrf: true });
-
-export const rejectRegistration = (id: string, remarks?: string | null) =>
-  apiPost<void>(`/api/registrations/${id}/reject`, { remarks }, { csrf: true });
+  input: { action: string; remarks?: string | null },
+) => apiPost<{ status: string }>(`/api/requests/${id}/transition`, input, { csrf: true });
 
 // --- Auth -------------------------------------------------------------------
 
@@ -435,48 +424,3 @@ export interface AuditLogEntry {
 
 export const getAuditLogs = (signal?: AbortSignal) =>
   apiGet<AuditLogEntry[]>("/api/audit?take=100", signal);
-
-// --- Public portals ---------------------------------------------------------
-
-export interface PortalSettings {
-  portalName: string;
-  province: string | null;
-  region: string | null;
-  address: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-  logoUrl: string | null;
-  sealUrl: string | null;
-}
-
-export interface PortalOrganization {
-  id: string;
-  type: string;
-  slug: string;
-  name: string;
-  settings: PortalSettings | null;
-}
-
-export interface LguPortal {
-  lgu: PortalOrganization;
-  barangays: { slug: string; name: string }[];
-}
-
-export interface BarangayPortal {
-  lgu: PortalOrganization;
-  barangay: PortalOrganization;
-  purokCount: number;
-}
-
-export const getLguPortal = (lguSlug: string, signal?: AbortSignal) =>
-  apiGet<LguPortal>(`/api/portal/${encodeURIComponent(lguSlug)}`, signal);
-
-export const getBarangayPortal = (
-  lguSlug: string,
-  barangaySlug: string,
-  signal?: AbortSignal,
-) =>
-  apiGet<BarangayPortal>(
-    `/api/portal/${encodeURIComponent(lguSlug)}/${encodeURIComponent(barangaySlug)}`,
-    signal,
-  );

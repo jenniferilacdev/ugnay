@@ -51,8 +51,7 @@ const navMain = [
     url: "#",
     icon: <FileTextIcon />,
     items: [
-      { title: "Registrations", url: "/registrations" },
-      { title: "Requests", url: "#" },
+      { title: "Requests", url: "/requests" },
       { title: "Certificates", url: "#" },
       { title: "Concerns", url: "#" },
     ],

@@ -98,8 +98,7 @@ app.MapOrganizationEndpoints();
 app.MapOfficialEndpoints();
 app.MapResidentEndpoints();
 app.MapHouseholdEndpoints();
-app.MapRegistrationEndpoints();
+app.MapRequestEndpoints();
 app.MapAuditEndpoints();
-app.MapPortalEndpoints();
 
 app.Run();

@@ -20,8 +20,5 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
             .IsRequired();
 
         builder.HasIndex(u => u.TenantId);
-
-        // At most one account per resident identity (spec §11).
-        builder.HasIndex(u => u.ResidentId).IsUnique();
     }
 }

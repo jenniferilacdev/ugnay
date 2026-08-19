@@ -5,7 +5,7 @@ using Ugnay.Domain.Common;
 using Ugnay.Domain.Households;
 using Ugnay.Domain.Officials;
 using Ugnay.Domain.Organizations;
-using Ugnay.Domain.Registrations;
+using Ugnay.Domain.Requests;
 using Ugnay.Domain.Residents;
 using Ugnay.Domain.Tenants;
 
@@ -33,7 +33,8 @@ public interface IAppDbContext
     DbSet<Household> Households { get; }
     DbSet<HouseholdMember> HouseholdMembers { get; }
 
-    DbSet<ResidentRegistration> ResidentRegistrations { get; }
+    DbSet<Request> Requests { get; }
+    DbSet<RequestEvent> RequestEvents { get; }
 
     DbSet<Role> Roles { get; }
     DbSet<Permission> Permissions { get; }
