@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ugnay.Api/Ugnay.Api.csproj" />
+    <Project Path="src/Ugnay.Application/Ugnay.Application.csproj" />
+    <Project Path="src/Ugnay.Domain/Ugnay.Domain.csproj" />
+    <Project Path="src/Ugnay.Infrastructure/Ugnay.Infrastructure.csproj" />
+  </Folder>
+</Solution>

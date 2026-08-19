@@ -1,0 +1,6 @@
+@Ugnay.Api_HostAddress = http://localhost:5295
+
+GET {{Ugnay.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

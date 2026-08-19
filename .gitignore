@@ -1,0 +1,35 @@
+# --- Environment / secrets ---
+.env
+.env.local
+*.user
+
+# --- .NET ---
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.suo
+.vs/
+*.userprefs
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Editors / OS ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# --- Build / coverage output ---
+coverage/
+TestResults/
+*.log
