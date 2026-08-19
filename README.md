@@ -7,7 +7,7 @@ Households → Residents → Public Services through Information, Services, Oper
 Communication, and Intelligence.
 
 This repository is being built incrementally following the phased plan in the product
-specification. **Current status: Phase 0 — Foundation (complete).**
+specification. **Current status: Phase 1 — Tenant, Organizations & Identity (complete).**
 
 ---
 
@@ -101,12 +101,37 @@ them as an explicit, separate deploy step.
 - OpenAPI, CORS for the frontend
 - Next.js app with a typed API client and TanStack Query data layer
 
+## Phase 1 includes (complete)
+
+- **Organizations & Puroks** — generalized City/Municipality → Barangay hierarchy,
+  per-org settings, puroks (spec §7, §35).
+- **Identity & Authorization** — ASP.NET Core Identity (cookie auth), permission
+  catalog + role templates + organization scope, seeded super admin, login/logout/me
+  with CSRF, permission-based policies (spec §15–29).
+- **Audit foundation** — `AuditLog` with an EF interceptor (auto-audits entity
+  changes) and explicit writer (auth events); `audit.view`-gated read API (spec §74).
+- **Public portals** — dynamic, unauthenticated `/{lgu}` and `/{lgu}/{barangay}`
+  routes resolving slug → organization, public information only (spec §9–10, §92).
+- **Frontend** — shadcn/ui, dedicated `/login`, inset-sidebar dashboard, auth guard.
+
+## Phase 2 includes (complete) — People Registry
+
+- **Officials** — `Official` + `OfficialTerm` (positions/terms preserve
+  administrations, spec §36).
+- **Residents** — registry with verification statuses (§13), residency history &
+  transfer (§14), safe reference numbering (§41), sensitive-field gating (§25/§92).
+- **Households** — `Household` + `HouseholdMember` (relationships, head, status),
+  add/remove/change-head preserving history (§33–34).
+- **Registration & linking** — public self-registration from barangay portals →
+  resident-match suggestions → staff approve (create/link resident) or reject;
+  account↔resident link schema (§11–12).
+- All writes CSRF-protected, organization-scope enforced, and audited with the actor.
+
 ## Roadmap (next)
 
-- **Phase 1** — Tenant/Organization/Purok model, dynamic public portal routing,
-  Identity (users, roles, permissions, organization scope), audit foundation.
-- **Phase 2** — People registry (officials, residents, verification, households).
-- Later phases per the product specification (workflow engine, certificates,
-  programs, assets, communications, reports, intelligence).
+- **Phase 3** — Reusable workflow foundation (requests, approval workflow, tasks,
+  internal notes, activity timelines, notifications) before the service modules.
+- Later phases per the product specification (certificates, programs, assets,
+  communications, reports, intelligence).
 
 > Configurable · Secure · Auditable · Historical · Connected · Resident-centered.

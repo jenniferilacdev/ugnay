@@ -2,7 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ugnay.Application.Common.Interfaces;
+using Ugnay.Infrastructure.Audit;
+using Ugnay.Infrastructure.Common;
 using Ugnay.Infrastructure.Persistence;
+using Ugnay.Infrastructure.Persistence.Interceptors;
 
 namespace Ugnay.Infrastructure;
 
@@ -24,13 +27,18 @@ public static class DependencyInjection
                 $"Connection string '{DefaultConnectionName}' was not found. " +
                 "Set ConnectionStrings__Default (see .env.example).");
 
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddScoped<AuditSaveChangesInterceptor>();
+
+        services.AddDbContext<AppDbContext>((sp, options) =>
             options
                 .UseNpgsql(connectionString, npgsql =>
                     npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
-                .UseSnakeCaseNamingConvention());
+                .UseSnakeCaseNamingConvention()
+                .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
 
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IAuditWriter, AuditWriter>();
+        services.AddScoped<IReferenceNumberGenerator, ReferenceNumberGenerator>();
 
         return services;
     }
