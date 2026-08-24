@@ -11,7 +11,8 @@ namespace Ugnay.Api.Endpoints;
 // --- DTOs -------------------------------------------------------------------
 
 public record HouseholdSummaryDto(
-    Guid Id, string ReferenceNumber, string Barangay, string? Purok,
+    Guid Id, string ReferenceNumber, string Barangay, Guid OrganizationId, string? Purok,
+    string? HouseNumber, string? Street, string? Zone,
     string? HeadName, int MemberCount, string Status);
 
 public record HouseholdMemberDto(
@@ -19,17 +20,20 @@ public record HouseholdMemberDto(
     string Relationship, bool IsHead, string Status);
 
 public record HouseholdDetailDto(
-    Guid Id, string ReferenceNumber, string Barangay, string? Purok, string? Address,
-    string? HousingType, string? ContactPhone, string Status,
-    IReadOnlyList<HouseholdMemberDto> Members);
+    Guid Id, string ReferenceNumber, string Barangay, Guid OrganizationId, string? Purok,
+    string? Address, string? HouseNumber, string? Street, string? Zone, string? HousingType,
+    string? ContactPhone, string Status, IReadOnlyList<HouseholdMemberDto> Members);
 
 public record CreateHouseholdRequest(
-    Guid OrganizationId, Guid? PurokId, string? Address, string? HousingType,
-    string? ContactPhone, Guid? HeadResidentId);
+    Guid OrganizationId, Guid? PurokId, string? Address, string? HouseNumber, string? Street,
+    string? Zone, string? HousingType, string? ContactPhone, Guid? HeadResidentId);
 
 public record AddMemberRequest(Guid ResidentId, string Relationship);
 
 public record ChangeHeadRequest(Guid MemberId);
+
+public record UpdateHouseholdRequest(
+    string? HouseNumber, string? Street, string? Zone, string? HousingType, string? ContactPhone);
 
 /// <summary>
 /// Households and their members (spec §33-34). Reads require <c>household.view</c>;
@@ -43,20 +47,24 @@ public static class HouseholdEndpoints
     {
         var group = app.MapGroup("/api/households").WithTags("Households");
 
-        // GET /api/households
-        group.MapGet("/", async (ScopeResolver scope, IAppDbContext db, CancellationToken ct) =>
+        // GET /api/households?organizationId=  (organizationId = header acting scope)
+        group.MapGet("/", async (
+            Guid? organizationId, ScopeResolver scope, IAppDbContext db, CancellationToken ct) =>
         {
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(organizationId, ct);
             if (visible.Count == 0) return Results.Ok(Array.Empty<HouseholdSummaryDto>());
 
             var items = await db.Households
                 .AsNoTracking()
                 .Where(h => visible.Contains(h.OrganizationId))
+                .Where(h => h.Status != HouseholdStatus.Archived)
                 .OrderBy(h => h.ReferenceNumber)
                 .Select(h => new HouseholdSummaryDto(
                     h.Id, h.ReferenceNumber,
                     db.Organizations.Where(o => o.Id == h.OrganizationId).Select(o => o.Name).FirstOrDefault() ?? "",
+                    h.OrganizationId,
                     h.PurokId == null ? null : db.Puroks.Where(p => p.Id == h.PurokId).Select(p => p.Name).FirstOrDefault(),
+                    h.HouseNumber, h.Street, h.Zone,
                     db.Residents.Where(r => r.Id == h.HouseholdHeadResidentId)
                         .Select(r => r.FirstName + " " + r.LastName).FirstOrDefault(),
                     h.Members.Count(m => m.Status == MembershipStatus.Active),
@@ -71,7 +79,7 @@ public static class HouseholdEndpoints
         group.MapGet("/{id:guid}", async (
             Guid id, ScopeResolver scope, IAppDbContext db, CancellationToken ct) =>
         {
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
 
             var household = await db.Households
                 .AsNoTracking()
@@ -85,7 +93,8 @@ public static class HouseholdEndpoints
 
             var dto = new HouseholdDetailDto(
                 household.Id, household.ReferenceNumber, household.Organization?.Name ?? "",
-                household.Purok?.Name, household.Address, household.HousingType,
+                household.OrganizationId, household.Purok?.Name, household.Address,
+                household.HouseNumber, household.Street, household.Zone, household.HousingType,
                 household.ContactPhone, household.Status.ToString(),
                 household.Members
                     .OrderByDescending(m => m.IsHead).ThenBy(m => m.Status)
@@ -108,7 +117,7 @@ public static class HouseholdEndpoints
         {
             if (await CsrfError(antiforgery, http) is { } bad) return bad;
 
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             if (!visible.Contains(request.OrganizationId))
                 return Results.Json(new { message = "Organization is outside your scope." },
                     statusCode: StatusCodes.Status403Forbidden);
@@ -121,6 +130,9 @@ public static class HouseholdEndpoints
                 OrganizationId = request.OrganizationId,
                 PurokId = request.PurokId,
                 Address = request.Address,
+                HouseNumber = request.HouseNumber,
+                Street = request.Street,
+                Zone = request.Zone,
                 HousingType = request.HousingType,
                 ContactPhone = request.ContactPhone,
             };
@@ -162,7 +174,7 @@ public static class HouseholdEndpoints
                 || relationship == MemberRelationship.Head)
                 return Results.BadRequest(new { message = "Invalid relationship (use Change head for the head)." });
 
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             var household = await db.Households.FirstOrDefaultAsync(h => h.Id == id, ct);
             if (household is null || !visible.Contains(household.OrganizationId))
                 return Results.NotFound(new { message = "Household not found." });
@@ -193,7 +205,7 @@ public static class HouseholdEndpoints
         {
             if (await CsrfError(antiforgery, http) is { } bad) return bad;
 
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             var household = await db.Households
                 .Include(h => h.Members)
                 .FirstOrDefaultAsync(h => h.Id == id, ct);
@@ -223,7 +235,7 @@ public static class HouseholdEndpoints
         {
             if (await CsrfError(antiforgery, http) is { } bad) return bad;
 
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             var household = await db.Households
                 .Include(h => h.Members)
                 .FirstOrDefaultAsync(h => h.Id == id, ct);
@@ -248,6 +260,47 @@ public static class HouseholdEndpoints
             return Results.NoContent();
         })
         .RequireAuthorization(IdentitySetup.PermissionPolicy(Permissions.HouseholdUpdate));
+
+        // POST /api/households/{id}/update — edit address parts and contact.
+        group.MapPost("/{id:guid}/update", async (
+            Guid id, UpdateHouseholdRequest request, ScopeResolver scope,
+            IAntiforgery antiforgery, IAppDbContext db, HttpContext http, CancellationToken ct) =>
+        {
+            if (await CsrfError(antiforgery, http) is { } bad) return bad;
+
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
+            var household = await db.Households.FirstOrDefaultAsync(h => h.Id == id, ct);
+            if (household is null || !visible.Contains(household.OrganizationId))
+                return Results.NotFound(new { message = "Household not found." });
+
+            household.HouseNumber = request.HouseNumber;
+            household.Street = request.Street;
+            household.Zone = request.Zone;
+            household.HousingType = request.HousingType;
+            household.ContactPhone = request.ContactPhone;
+
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(new { household.Id });
+        })
+        .RequireAuthorization(IdentitySetup.PermissionPolicy(Permissions.HouseholdUpdate));
+
+        // POST /api/households/{id}/delete — archive (soft delete; members retained).
+        group.MapPost("/{id:guid}/delete", async (
+            Guid id, ScopeResolver scope, IAntiforgery antiforgery,
+            IAppDbContext db, HttpContext http, CancellationToken ct) =>
+        {
+            if (await CsrfError(antiforgery, http) is { } bad) return bad;
+
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
+            var household = await db.Households.FirstOrDefaultAsync(h => h.Id == id, ct);
+            if (household is null || !visible.Contains(household.OrganizationId))
+                return Results.NotFound(new { message = "Household not found." });
+
+            household.Status = HouseholdStatus.Archived;
+            await db.SaveChangesAsync(ct);
+            return Results.NoContent();
+        })
+        .RequireAuthorization(IdentitySetup.PermissionPolicy(Permissions.HouseholdArchive));
 
         return app;
     }

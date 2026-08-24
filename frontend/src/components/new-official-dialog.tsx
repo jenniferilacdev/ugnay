@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 
-import { ApiError, createOfficial, getOrganizations } from "@/lib/api";
+import { ApiError, createOfficial } from "@/lib/api";
+import { useScopedBarangays } from "@/lib/use-barangays";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,17 +44,20 @@ export function NewOfficialDialog() {
   const [organizationId, setOrganizationId] = useState("");
   const [startDate, setStartDate] = useState("");
 
-  const barangays = useQuery({
-    queryKey: ["organizations", "flat", "Barangay"],
-    queryFn: ({ signal }) => getOrganizations("Barangay", signal),
-  });
+  const { barangays } = useScopedBarangays();
+
+  // A barangay-level account only has its own barangay — use it implicitly and
+  // hide the picker.
+  const isBarangayScoped = barangays.length === 1;
+  const effectiveOrgId =
+    organizationId || (isBarangayScoped ? barangays[0].id : "");
 
   const mutation = useMutation({
     mutationFn: () =>
       createOfficial({
         fullName,
         position,
-        organizationId,
+        organizationId: effectiveOrgId,
         startDate: startDate || null,
       }),
     onSuccess: () => {
@@ -72,7 +77,7 @@ export function NewOfficialDialog() {
         ? "Could not create official."
         : null;
 
-  const canSubmit = fullName.trim() && position && organizationId;
+  const canSubmit = fullName.trim() && position && effectiveOrgId;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -110,34 +115,36 @@ export function NewOfficialDialog() {
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label>Barangay</Label>
-            <Select
-              value={organizationId}
-              onValueChange={(v) => setOrganizationId(v ?? "")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select barangay">
-                  {(value) =>
-                    value
-                      ? (barangays.data?.find((b) => b.id === value)?.name ?? "")
-                      : "Select barangay"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {barangays.data?.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!isBarangayScoped && (
+            <div className="flex flex-col gap-2">
+              <Label>Barangay</Label>
+              <Select
+                value={organizationId}
+                onValueChange={(v) => setOrganizationId(v ?? "")}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select barangay">
+                    {(value) =>
+                      value
+                        ? (barangays.find((b) => b.id === value)?.name ?? "")
+                        : "Select barangay"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {barangays.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <Label>Position</Label>
             <Select value={position} onValueChange={(v) => setPosition(v ?? "")}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select position" />
               </SelectTrigger>
               <SelectContent>
@@ -152,11 +159,11 @@ export function NewOfficialDialog() {
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="startDate">Term start date</Label>
-            <Input
+            <DatePicker
               id="startDate"
-              type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={setStartDate}
+              placeholder="Select start date"
             />
           </div>
 

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ugnay.Domain.Assistance;
 using Ugnay.Domain.Organizations;
 using Ugnay.Domain.Tenants;
 
@@ -71,17 +72,37 @@ public static class DevDataSeeder
         }
 
         // --- Barangays + puroks ---------------------------------------------
-        var barangays = new (string Slug, string Code, string Name, int Puroks)[]
+        // The 49 barangays of Tuguegarao City, Cagayan (PSGC / PSA). Slug and code
+        // are derived from the name so the list stays a plain name catalogue.
+        var barangayNames = new[]
         {
-            ("ugac-sur", "BRGY-UGAC-SUR", "Ugac Sur", 4),
-            ("centro-01", "BRGY-CENTRO-01", "Centro 01 (Poblacion)", 3),
-            ("carig-sur", "BRGY-CARIG-SUR", "Carig Sur", 5),
+            "Annafunan East", "Annafunan West", "Atulayan Norte", "Atulayan Sur",
+            "Bagay", "Buntun", "Caggay", "Capatan", "Carig Norte", "Carig Sur",
+            "Caritan Centro", "Caritan Norte", "Caritan Sur", "Cataggaman Nuevo",
+            "Cataggaman Pardo", "Cataggaman Viejo", "Centro 01 (Poblacion)", "Centro 02",
+            "Centro 03", "Centro 04", "Centro 05", "Centro 06", "Centro 07", "Centro 08",
+            "Centro 09", "Centro 10", "Centro 11", "Centro 12", "Dadda", "Gosi Norte",
+            "Gosi Sur", "Larion Alto", "Larion Bajo", "Leonarda", "Libag Norte",
+            "Libag Sur", "Linao East", "Linao Norte", "Linao West", "Namabbalan Norte",
+            "Namabbalan Sur", "Pallua Norte", "Pallua Sur", "Pengue-Ruyu", "San Gabriel",
+            "Tagga", "Tanza", "Ugac Norte", "Ugac Sur",
         };
 
-        foreach (var b in barangays)
+        // A handful of barangays carry seeded puroks so the purok features have data.
+        var purokCounts = new Dictionary<string, int>
         {
+            ["ugac-sur"] = 4,
+            ["centro-01"] = 3,
+            ["carig-sur"] = 5,
+        };
+
+        foreach (var name in barangayNames)
+        {
+            var slug = Slugify(name);
+            var barangayCode = "BRGY-" + slug.ToUpperInvariant();
+
             var barangay = await db.Organizations
-                .FirstOrDefaultAsync(o => o.TenantId == tenant.Id && o.Slug == b.Slug, ct);
+                .FirstOrDefaultAsync(o => o.TenantId == tenant.Id && o.Slug == slug, ct);
             if (barangay is null)
             {
                 barangay = new Organization
@@ -89,15 +110,16 @@ public static class DevDataSeeder
                     TenantId = tenant.Id,
                     ParentOrganizationId = city.Id,
                     Type = OrganizationType.Barangay,
-                    Code = b.Code,
-                    Slug = b.Slug,
-                    Name = b.Name,
+                    Code = barangayCode,
+                    Slug = slug,
+                    Name = name,
                 };
                 db.Organizations.Add(barangay);
                 await db.SaveChangesAsync(ct);
             }
 
-            for (var i = 1; i <= b.Puroks; i++)
+            var purokCount = purokCounts.GetValueOrDefault(slug, 0);
+            for (var i = 1; i <= purokCount; i++)
             {
                 var code = $"P{i}";
                 var exists = await db.Puroks.AnyAsync(
@@ -115,5 +137,37 @@ public static class DevDataSeeder
             }
             await db.SaveChangesAsync(ct);
         }
+
+        // --- Assistance programs (spec §43) ---------------------------------
+        var programs = new (string Code, string Name)[]
+        {
+            ("4Ps", "Pantawid Pamilyang Pilipino Program (4Ps)"),
+            ("TUPAD", "Tulong Panghanapbuhay sa Ating Disadvantaged/Displaced Workers"),
+            ("WNP", "Walang Gutom Program"),
+        };
+        foreach (var p in programs)
+        {
+            var exists = await db.AssistancePrograms.AnyAsync(
+                a => a.TenantId == tenant.Id && a.Code == p.Code, ct);
+            if (!exists)
+                db.AssistancePrograms.Add(new AssistanceProgram
+                {
+                    TenantId = tenant.Id,
+                    Code = p.Code,
+                    Name = p.Name,
+                });
+        }
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Derives a URL-safe slug from a barangay name, dropping any parenthetical
+    /// (e.g. "Centro 01 (Poblacion)" → "centro-01").
+    /// </summary>
+    private static string Slugify(string name)
+    {
+        var paren = name.IndexOf('(');
+        var core = (paren >= 0 ? name[..paren] : name).Trim();
+        return core.ToLowerInvariant().Replace(' ', '-');
     }
 }

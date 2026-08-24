@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ugnay.Domain.Assistance;
 using Ugnay.Domain.Audit;
 using Ugnay.Domain.Authorization;
 using Ugnay.Domain.Common;
@@ -7,6 +8,7 @@ using Ugnay.Domain.Officials;
 using Ugnay.Domain.Organizations;
 using Ugnay.Domain.Requests;
 using Ugnay.Domain.Residents;
+using Ugnay.Domain.Tasks;
 using Ugnay.Domain.Tenants;
 
 namespace Ugnay.Application.Common.Interfaces;
@@ -29,12 +31,16 @@ public interface IAppDbContext
 
     DbSet<Resident> Residents { get; }
     DbSet<ResidentResidency> ResidentResidencies { get; }
+    DbSet<AssistanceProgram> AssistancePrograms { get; }
+    DbSet<ResidentAssistanceProgram> ResidentAssistancePrograms { get; }
 
     DbSet<Household> Households { get; }
     DbSet<HouseholdMember> HouseholdMembers { get; }
 
     DbSet<Request> Requests { get; }
     DbSet<RequestEvent> RequestEvents { get; }
+
+    DbSet<TaskItem> Tasks { get; }
 
     DbSet<Role> Roles { get; }
     DbSet<Permission> Permissions { get; }

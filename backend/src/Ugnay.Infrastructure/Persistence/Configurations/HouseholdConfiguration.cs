@@ -13,6 +13,9 @@ public class HouseholdConfiguration : IEntityTypeConfiguration<Household>
 
         builder.Property(h => h.ReferenceNumber).IsRequired().HasMaxLength(30);
         builder.Property(h => h.Address).HasMaxLength(400);
+        builder.Property(h => h.HouseNumber).HasMaxLength(50);
+        builder.Property(h => h.Street).HasMaxLength(150);
+        builder.Property(h => h.Zone).HasMaxLength(100);
         builder.Property(h => h.HousingType).HasMaxLength(100);
         builder.Property(h => h.ContactPhone).HasMaxLength(50);
         builder.Property(h => h.Status).HasConversion<string>().HasMaxLength(20).IsRequired();

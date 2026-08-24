@@ -256,6 +256,45 @@ export default function ResidentDetailPage() {
           </div>
 
           <Card>
+            <CardHeader><CardTitle className="text-base">Classifications &amp; employment</CardTitle></CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                <Field label="Voter's ID" value={r.classifications.voterId} />
+                <Field
+                  label="Solo Parent"
+                  value={r.classifications.isSoloParent ? (r.classifications.soloParentId ?? "Yes") : "No"}
+                />
+                <Field
+                  label="Senior Citizen"
+                  value={r.classifications.isSeniorCitizen ? (r.classifications.seniorCitizenId ?? "Yes") : "No"}
+                />
+                <Field
+                  label="PWD"
+                  value={r.classifications.hasDisability ? (r.classifications.disabilityId ?? "Yes") : "No"}
+                />
+                {r.classifications.hasDisability && (
+                  <Field label="Disability type" value={r.classifications.disabilityType} />
+                )}
+                <Field label="Employment" value={r.classifications.employmentStatus} />
+                {r.classifications.employedType && (
+                  <Field label="Employed type" value={r.classifications.employedType} />
+                )}
+                {r.classifications.unemployedType && (
+                  <Field label="Unemployed type" value={r.classifications.unemployedType} />
+                )}
+              </dl>
+              {r.assistancePrograms.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Assistance:</span>
+                  {r.assistancePrograms.map((p) => (
+                    <Badge key={p.id} variant="secondary" title={p.name}>{p.code}</Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle className="text-base">Residency history</CardTitle></CardHeader>
             <CardContent>
               <Table>

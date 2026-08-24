@@ -23,6 +23,9 @@ public class Household : BaseEntity, IAuditableEntity
     public Purok? Purok { get; set; }
 
     public string? Address { get; set; }
+    public string? HouseNumber { get; set; }
+    public string? Street { get; set; }
+    public string? Zone { get; set; }
     public string? HousingType { get; set; }
     public string? ContactPhone { get; set; }
 

@@ -30,6 +30,15 @@ public static class Permissions
     public const string RequestReview = "request.review";
     public const string RequestApprove = "request.approve";
 
+    // Tasks (spec §57)
+    public const string TaskView = "task.view";
+    public const string TaskCreate = "task.create";
+    public const string TaskUpdate = "task.update";
+
+    // Assistance programs (spec §43)
+    public const string AssistanceView = "assistance.view";
+    public const string AssistanceManage = "assistance.manage";
+
     // Households (spec §33)
     public const string HouseholdView = "household.view";
     public const string HouseholdCreate = "household.create";
@@ -75,6 +84,11 @@ public static class Permissions
         new(RequestCreate, "request", "create", "Create and submit requests"),
         new(RequestReview, "request", "review", "Review, assign, process, and complete requests"),
         new(RequestApprove, "request", "approve", "Approve or reject requests"),
+        new(TaskView, "task", "view", "View tasks"),
+        new(TaskCreate, "task", "create", "Create tasks"),
+        new(TaskUpdate, "task", "update", "Update, assign, and complete tasks"),
+        new(AssistanceView, "assistance", "view", "View assistance programs"),
+        new(AssistanceManage, "assistance", "manage", "Manage assistance programs"),
         new(HouseholdView, "household", "view", "View households"),
         new(HouseholdCreate, "household", "create", "Create households"),
         new(HouseholdUpdate, "household", "update", "Update households and members"),

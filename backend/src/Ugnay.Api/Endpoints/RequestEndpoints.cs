@@ -50,7 +50,7 @@ public static class RequestEndpoints
         group.MapGet("/", async (
             string? status, string? category, ScopeResolver scope, IAppDbContext db, CancellationToken ct) =>
         {
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             if (visible.Count == 0) return Results.Ok(Array.Empty<RequestSummaryDto>());
 
             var query = db.Requests.AsNoTracking().Where(r => visible.Contains(r.OrganizationId));
@@ -78,7 +78,7 @@ public static class RequestEndpoints
         group.MapGet("/{id:guid}", async (
             Guid id, ICurrentUser current, ScopeResolver scope, IAppDbContext db, CancellationToken ct) =>
         {
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
 
             var req = await db.Requests.AsNoTracking()
                 .Include(r => r.Organization)
@@ -125,7 +125,7 @@ public static class RequestEndpoints
             if (!Enum.TryParse<RequestCategory>(request.Category, true, out var category))
                 return Results.BadRequest(new { message = "Invalid category." });
 
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             if (!visible.Contains(request.OrganizationId))
                 return Results.Json(new { message = "Organization is outside your scope." },
                     statusCode: StatusCodes.Status403Forbidden);
@@ -165,7 +165,7 @@ public static class RequestEndpoints
         {
             if (await CsrfError(antiforgery, http) is { } bad) return bad;
 
-            var visible = await scope.VisibleOrganizationIdsAsync(ct);
+            var visible = await scope.VisibleOrganizationIdsAsync(ct: ct);
             var req = await db.Requests.Include(r => r.Events).FirstOrDefaultAsync(r => r.Id == id, ct);
             if (req is null || !visible.Contains(req.OrganizationId))
                 return Results.NotFound(new { message = "Request not found." });

@@ -10,11 +10,16 @@ namespace Ugnay.Api.Auth;
 /// </summary>
 public class ScopeResolver(ICurrentUser current, IAppDbContext db)
 {
-    public async Task<HashSet<Guid>> VisibleOrganizationIdsAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Organizations the user may see. When <paramref name="within"/> is supplied
+    /// (the header "acting scope"), the result is further narrowed to that org's
+    /// subtree — but only if the user's scope actually covers it; otherwise empty.
+    /// </summary>
+    public async Task<HashSet<Guid>> VisibleOrganizationIdsAsync(
+        Guid? within = null, CancellationToken ct = default)
     {
-        var visible = new HashSet<Guid>();
         if (current.TenantId is not { } tenantId)
-            return visible;
+            return [];
 
         var orgs = await db.Organizations
             .AsNoTracking()
@@ -27,16 +32,29 @@ public class ScopeResolver(ICurrentUser current, IAppDbContext db)
             .ToDictionary(g => g.Key, g => g.Select(o => o.Id).ToList());
 
         var allIds = orgs.Select(o => o.Id).ToHashSet();
-        var queue = new Queue<Guid>(current.ScopeOrganizationIds.Where(allIds.Contains));
+        var visible = Expand(current.ScopeOrganizationIds.Where(allIds.Contains), byParent);
 
+        if (within is null)
+            return visible;
+        if (!visible.Contains(within.Value))
+            return [];
+
+        // Narrow to the acting org's subtree (⊆ visible, since `within` is in scope).
+        return Expand([within.Value], byParent);
+    }
+
+    private static HashSet<Guid> Expand(
+        IEnumerable<Guid> roots, IReadOnlyDictionary<Guid, List<Guid>> byParent)
+    {
+        var result = new HashSet<Guid>();
+        var queue = new Queue<Guid>(roots);
         while (queue.Count > 0)
         {
             var id = queue.Dequeue();
-            if (!visible.Add(id)) continue;
+            if (!result.Add(id)) continue;
             if (byParent.TryGetValue(id, out var children))
                 foreach (var child in children) queue.Enqueue(child);
         }
-
-        return visible;
+        return result;
     }
 }

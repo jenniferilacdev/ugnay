@@ -9,6 +9,7 @@ import {
   FileTextIcon,
   HeartHandshakeIcon,
   ShieldCheckIcon,
+  ListChecksIcon,
   SettingsIcon,
   LifeBuoyIcon,
   LandmarkIcon,
@@ -61,8 +62,19 @@ const navMain = [
     url: "#",
     icon: <HeartHandshakeIcon />,
     items: [
+      { title: "Assistance Programs", url: "/assistance-programs" },
       { title: "Programs", url: "#" },
       { title: "Beneficiaries", url: "#" },
+    ],
+  },
+  {
+    title: "Operations",
+    url: "#",
+    icon: <ListChecksIcon />,
+    items: [
+      { title: "Tasks", url: "/tasks" },
+      { title: "Directives", url: "#" },
+      { title: "Municipal Requests", url: "#" },
     ],
   },
   {
@@ -71,7 +83,7 @@ const navMain = [
     icon: <ShieldCheckIcon />,
     items: [
       { title: "Organizations", url: "#" },
-      { title: "Users", url: "#" },
+      { title: "Users", url: "/users" },
       { title: "Roles & Permissions", url: "#" },
       { title: "Audit Logs", url: "/audit" },
     ],

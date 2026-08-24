@@ -36,6 +36,22 @@ public static class OrganizationEndpoints
             var byParent = GroupByParent(orgs);
             var visible = ResolveVisible(orgs, byParent, current.ScopeOrganizationIds);
 
+            // Add the ancestor chain of each scoped org so a barangay/city account
+            // sees its place in the hierarchy (its municipality and province) for
+            // header context. Ancestors are containers only — their non-scoped
+            // children are not added, so sibling organizations stay hidden.
+            var byId = orgs.ToDictionary(o => o.Id);
+            foreach (var scopeId in current.ScopeOrganizationIds)
+            {
+                var cursor = byId.GetValueOrDefault(scopeId);
+                while (cursor?.ParentOrganizationId is { } parentId &&
+                       byId.TryGetValue(parentId, out var parent))
+                {
+                    visible.Add(parentId);
+                    cursor = parent;
+                }
+            }
+
             var roots = orgs.Where(o =>
                 visible.Contains(o.Id) &&
                 (o.ParentOrganizationId is null || !visible.Contains(o.ParentOrganizationId.Value)));

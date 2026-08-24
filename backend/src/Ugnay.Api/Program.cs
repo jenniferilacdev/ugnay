@@ -97,8 +97,11 @@ app.MapAuthEndpoints();
 app.MapOrganizationEndpoints();
 app.MapOfficialEndpoints();
 app.MapResidentEndpoints();
+app.MapAssistanceProgramEndpoints();
 app.MapHouseholdEndpoints();
 app.MapRequestEndpoints();
+app.MapTaskEndpoints();
+app.MapUserEndpoints();
 app.MapAuditEndpoints();
 
 app.Run();

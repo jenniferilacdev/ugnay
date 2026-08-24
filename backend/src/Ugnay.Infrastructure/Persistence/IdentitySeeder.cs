@@ -28,7 +28,7 @@ public static class IdentitySeeder
              Permissions.OfficialView, Permissions.OfficialCreate, Permissions.OfficialUpdate,
              Permissions.OfficialArchive, Permissions.ResidentView, Permissions.ResidentViewSensitive,
              Permissions.ResidentExport, Permissions.HouseholdView,
-             Permissions.RequestView,
+             Permissions.RequestView, Permissions.TaskView, Permissions.AssistanceView,
              Permissions.UserView, Permissions.UserManage, Permissions.RoleView]),
 
         ("barangay-admin", "Barangay Admin", "Single-barangay administration (spec §19)",
@@ -41,6 +41,8 @@ public static class IdentitySeeder
              Permissions.HouseholdUpdate, Permissions.HouseholdArchive,
              Permissions.RequestView, Permissions.RequestCreate, Permissions.RequestReview,
              Permissions.RequestApprove,
+             Permissions.TaskView, Permissions.TaskCreate, Permissions.TaskUpdate,
+             Permissions.AssistanceView, Permissions.AssistanceManage,
              Permissions.UserView, Permissions.UserManage, Permissions.RoleView]),
 
         ("barangay-secretary", "Barangay Secretary", "Records and documentation (spec §20)",
@@ -49,13 +51,17 @@ public static class IdentitySeeder
              Permissions.ResidentUpdate, Permissions.HouseholdView, Permissions.HouseholdCreate,
              Permissions.HouseholdUpdate,
              Permissions.RequestView, Permissions.RequestCreate, Permissions.RequestReview,
+             Permissions.TaskView, Permissions.TaskCreate, Permissions.TaskUpdate,
+             Permissions.AssistanceView,
              Permissions.UserView]),
 
         ("encoder", "Encoder", "Data entry, no approval or role management (spec §20)",
             [Permissions.OrganizationView, Permissions.PurokView, Permissions.OfficialView,
              Permissions.ResidentView, Permissions.ResidentCreate, Permissions.ResidentUpdate,
              Permissions.HouseholdView, Permissions.HouseholdCreate, Permissions.HouseholdUpdate,
-             Permissions.RequestView, Permissions.RequestCreate]),
+             Permissions.RequestView, Permissions.RequestCreate,
+             Permissions.TaskView, Permissions.TaskCreate, Permissions.TaskUpdate,
+             Permissions.AssistanceView]),
     ];
 
     public static async Task SeedAsync(

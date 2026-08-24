@@ -1,3 +1,4 @@
+using Ugnay.Domain.Assistance;
 using Ugnay.Domain.Audit;
 using Ugnay.Domain.Common;
 
@@ -28,6 +29,28 @@ public class Resident : BaseEntity, IAuditableEntity
 
     public string? Occupation { get; set; }
     public string? Education { get; set; }
+
+    /// <summary>Voter's ID / registration number (spec §32).</summary>
+    public string? VoterId { get; set; }
+
+    // --- Sectoral classifications (each: a flag + the ID number when applicable) ---
+    public bool IsSoloParent { get; set; }
+    public string? SoloParentId { get; set; }
+
+    public bool IsSeniorCitizen { get; set; }
+    public string? SeniorCitizenId { get; set; }
+
+    public bool HasDisability { get; set; }
+    public string? DisabilityId { get; set; }
+    public string? DisabilityType { get; set; }
+
+    // --- Employment ---
+    public EmploymentStatus EmploymentStatus { get; set; } = EmploymentStatus.Unspecified;
+    public string? EmployedType { get; set; }
+    public string? UnemployedType { get; set; }
+
+    /// <summary>Social-assistance programs the resident is enrolled in (spec §43).</summary>
+    public ICollection<ResidentAssistanceProgram> AssistancePrograms { get; set; } = [];
 
     // --- Contact (sensitive, spec §25 view_sensitive) ---
     public string? ContactEmail { get; set; }

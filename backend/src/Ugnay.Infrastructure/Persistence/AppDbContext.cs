@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Ugnay.Application.Common.Interfaces;
+using Ugnay.Domain.Assistance;
 using Ugnay.Domain.Audit;
 using Ugnay.Domain.Authorization;
 using Ugnay.Domain.Common;
@@ -10,6 +11,7 @@ using Ugnay.Domain.Officials;
 using Ugnay.Domain.Organizations;
 using Ugnay.Domain.Requests;
 using Ugnay.Domain.Residents;
+using Ugnay.Domain.Tasks;
 using Ugnay.Domain.Tenants;
 using Ugnay.Infrastructure.Identity;
 
@@ -37,6 +39,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Resident> Residents => Set<Resident>();
     public DbSet<ResidentResidency> ResidentResidencies => Set<ResidentResidency>();
+    public DbSet<AssistanceProgram> AssistancePrograms => Set<AssistanceProgram>();
+    public DbSet<ResidentAssistanceProgram> ResidentAssistancePrograms => Set<ResidentAssistanceProgram>();
     public DbSet<ReferenceCounter> ReferenceCounters => Set<ReferenceCounter>();
 
     public DbSet<Household> Households => Set<Household>();
@@ -44,6 +48,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Request> Requests => Set<Request>();
     public DbSet<RequestEvent> RequestEvents => Set<RequestEvent>();
+
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();

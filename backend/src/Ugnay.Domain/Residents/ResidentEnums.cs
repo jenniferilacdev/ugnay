@@ -33,7 +33,17 @@ public enum CivilStatus
     Widowed = 3,
     Separated = 4,
     Divorced = 5,
-    Other = 6,
+    CommonLaw = 6,
+    Annulled = 7,
+    Other = 8,
+}
+
+/// <summary>Employment status (spec-adjacent demographic classification).</summary>
+public enum EmploymentStatus
+{
+    Unspecified = 1,
+    Employed = 2,
+    Unemployed = 3,
 }
 
 /// <summary>Status of a single residency period (spec §14).</summary>

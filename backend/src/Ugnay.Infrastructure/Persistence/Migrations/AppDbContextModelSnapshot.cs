@@ -103,6 +103,72 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Ugnay.Domain.Assistance.AssistanceProgram", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assistance_programs");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_assistance_programs_tenant_id_code");
+
+                    b.ToTable("assistance_programs", (string)null);
+                });
+
+            modelBuilder.Entity("Ugnay.Domain.Assistance.ResidentAssistanceProgram", b =>
+                {
+                    b.Property<Guid>("ResidentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resident_id");
+
+                    b.Property<Guid>("AssistanceProgramId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assistance_program_id");
+
+                    b.HasKey("ResidentId", "AssistanceProgramId")
+                        .HasName("pk_resident_assistance_programs");
+
+                    b.HasIndex("AssistanceProgramId")
+                        .HasDatabaseName("ix_resident_assistance_programs_assistance_program_id");
+
+                    b.ToTable("resident_assistance_programs", (string)null);
+                });
+
             modelBuilder.Entity("Ugnay.Domain.Audit.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -407,6 +473,11 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
+                    b.Property<string>("HouseNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("house_number");
+
                     b.Property<Guid?>("HouseholdHeadResidentId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_head_resident_id");
@@ -436,6 +507,11 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
+                    b.Property<string>("Street")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("street");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -443,6 +519,11 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
+
+                    b.Property<string>("Zone")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("zone");
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
@@ -1086,6 +1167,16 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("current_organization_id");
 
+                    b.Property<string>("DisabilityId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("disability_id");
+
+                    b.Property<string>("DisabilityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("disability_type");
+
                     b.Property<string>("Education")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)")
@@ -1101,11 +1192,34 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("emergency_contact_phone");
 
+                    b.Property<string>("EmployedType")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("employed_type");
+
+                    b.Property<string>("EmploymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("employment_status");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("first_name");
+
+                    b.Property<bool>("HasDisability")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_disability");
+
+                    b.Property<bool>("IsSeniorCitizen")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_senior_citizen");
+
+                    b.Property<bool>("IsSoloParent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_solo_parent");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -1134,11 +1248,21 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("reference_number");
 
+                    b.Property<string>("SeniorCitizenId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("senior_citizen_id");
+
                     b.Property<string>("Sex")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("sex");
+
+                    b.Property<string>("SoloParentId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("solo_parent_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1154,6 +1278,11 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
+
+                    b.Property<string>("UnemployedType")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("unemployed_type");
 
                     b.Property<DateTimeOffset?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -1182,6 +1311,11 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("VerifiedByUserId")
                         .HasColumnType("uuid")
                         .HasColumnName("verified_by_user_id");
+
+                    b.Property<string>("VoterId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("voter_id");
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
@@ -1274,6 +1408,94 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_resident_residencies_resident_id_status");
 
                     b.ToTable("resident_residencies", (string)null);
+                });
+
+            modelBuilder.Entity("Ugnay.Domain.Tasks.TaskItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_to_user_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("priority");
+
+                    b.Property<Guid?>("RelatedRecordId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("related_record_id");
+
+                    b.Property<string>("RelatedRecordType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("related_record_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tasks");
+
+                    b.HasIndex("AssignedToUserId", "Status")
+                        .HasDatabaseName("ix_tasks_assigned_to_user_id_status");
+
+                    b.HasIndex("OrganizationId", "Status")
+                        .HasDatabaseName("ix_tasks_organization_id_status");
+
+                    b.HasIndex("RelatedRecordType", "RelatedRecordId")
+                        .HasDatabaseName("ix_tasks_related_record_type_related_record_id");
+
+                    b.ToTable("tasks", (string)null);
                 });
 
             modelBuilder.Entity("Ugnay.Domain.Tenants.Tenant", b =>
@@ -1454,6 +1676,27 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_asp_net_user_tokens_asp_net_users_user_id");
+                });
+
+            modelBuilder.Entity("Ugnay.Domain.Assistance.ResidentAssistanceProgram", b =>
+                {
+                    b.HasOne("Ugnay.Domain.Assistance.AssistanceProgram", "AssistanceProgram")
+                        .WithMany()
+                        .HasForeignKey("AssistanceProgramId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_resident_assistance_programs_assistance_programs_assistance");
+
+                    b.HasOne("Ugnay.Domain.Residents.Resident", "Resident")
+                        .WithMany("AssistancePrograms")
+                        .HasForeignKey("ResidentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_resident_assistance_programs_residents_resident_id");
+
+                    b.Navigation("AssistanceProgram");
+
+                    b.Navigation("Resident");
                 });
 
             modelBuilder.Entity("Ugnay.Domain.Authorization.RolePermission", b =>
@@ -1674,6 +1917,18 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
                     b.Navigation("Resident");
                 });
 
+            modelBuilder.Entity("Ugnay.Domain.Tasks.TaskItem", b =>
+                {
+                    b.HasOne("Ugnay.Domain.Organizations.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tasks_organizations_organization_id");
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Ugnay.Domain.Authorization.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -1710,6 +1965,8 @@ namespace Ugnay.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Ugnay.Domain.Residents.Resident", b =>
                 {
+                    b.Navigation("AssistancePrograms");
+
                     b.Navigation("Residencies");
                 });
 #pragma warning restore 612, 618

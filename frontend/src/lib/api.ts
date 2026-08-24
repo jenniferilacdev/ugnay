@@ -14,6 +14,11 @@ export class ApiError extends Error {
   }
 }
 
+/** Appends an `organizationId` query param when an acting scope is set. */
+function withOrg(path: string, organizationId?: string | null): string {
+  return organizationId ? `${path}?organizationId=${organizationId}` : path;
+}
+
 export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: { Accept: "application/json" },
@@ -160,11 +165,27 @@ export interface CreateOfficialInput {
   startDate?: string | null;
 }
 
-export const getOfficials = (signal?: AbortSignal) =>
-  apiGet<Official[]>("/api/officials", signal);
+export const getOfficials = (organizationId?: string | null, signal?: AbortSignal) =>
+  apiGet<Official[]>(withOrg("/api/officials", organizationId), signal);
 
 export const createOfficial = (input: CreateOfficialInput) =>
   apiPost<{ id: string }>("/api/officials", input, { csrf: true });
+
+export interface UpdateOfficialInput {
+  fullName: string;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  position: string;
+  committee?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export const updateOfficial = (id: string, input: UpdateOfficialInput) =>
+  apiPost<{ id: string }>(`/api/officials/${id}/update`, input, { csrf: true });
+
+export const deleteOfficial = (id: string) =>
+  apiPost<void>(`/api/officials/${id}/delete`, undefined, { csrf: true });
 
 // --- Residents --------------------------------------------------------------
 
@@ -198,6 +219,26 @@ export interface ResidentSensitive {
   emergencyContactPhone: string | null;
 }
 
+export interface ResidentClassifications {
+  voterId: string | null;
+  isSoloParent: boolean;
+  soloParentId: string | null;
+  isSeniorCitizen: boolean;
+  seniorCitizenId: string | null;
+  hasDisability: boolean;
+  disabilityId: string | null;
+  disabilityType: string | null;
+  employmentStatus: string;
+  employedType: string | null;
+  unemployedType: string | null;
+}
+
+export interface ResidentProgram {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface ResidentDetail {
   id: string;
   referenceNumber: string;
@@ -216,6 +257,8 @@ export interface ResidentDetail {
   verifiedAtUtc: string | null;
   status: string;
   sensitive: ResidentSensitive | null;
+  classifications: ResidentClassifications;
+  assistancePrograms: ResidentProgram[];
   residencies: Residency[];
 }
 
@@ -230,10 +273,46 @@ export interface CreateResidentInput {
   organizationId: string;
   purokId?: string | null;
   address?: string | null;
+  contactPhone?: string | null;
+  voterId?: string | null;
+  householdId?: string | null;
+  relationship?: string | null;
+  createHousehold?: boolean;
+  houseNumber?: string | null;
+  street?: string | null;
+  zone?: string | null;
+  isSoloParent?: boolean;
+  soloParentId?: string | null;
+  isSeniorCitizen?: boolean;
+  seniorCitizenId?: string | null;
+  hasDisability?: boolean;
+  disabilityId?: string | null;
+  disabilityType?: string | null;
+  employmentStatus?: string | null;
+  employedType?: string | null;
+  unemployedType?: string | null;
+  assistanceProgramIds?: string[];
 }
 
-export const getResidents = (signal?: AbortSignal) =>
-  apiGet<ResidentSummary[]>("/api/residents", signal);
+// --- Assistance programs (spec §43) -----------------------------------------
+
+export interface AssistanceProgram {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export const getAssistancePrograms = (signal?: AbortSignal) =>
+  apiGet<AssistanceProgram[]>("/api/assistance-programs", signal);
+
+export const createAssistanceProgram = (input: { code: string; name: string }) =>
+  apiPost<AssistanceProgram>("/api/assistance-programs", input, { csrf: true });
+
+export const removeAssistanceProgram = (id: string) =>
+  apiPost<void>(`/api/assistance-programs/${id}/remove`, undefined, { csrf: true });
+
+export const getResidents = (organizationId?: string | null, signal?: AbortSignal) =>
+  apiGet<ResidentSummary[]>(withOrg("/api/residents", organizationId), signal);
 
 export const getResident = (id: string, signal?: AbortSignal) =>
   apiGet<ResidentDetail>(`/api/residents/${id}`, signal);
@@ -251,13 +330,35 @@ export const transferResident = (
   input: { toOrganizationId: string; address?: string | null },
 ) => apiPost<{ id: string }>(`/api/residents/${id}/transfer`, input, { csrf: true });
 
+export interface UpdateResidentInput {
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  suffix?: string | null;
+  sex?: string | null;
+  birthDate?: string | null;
+  civilStatus?: string | null;
+  contactPhone?: string | null;
+  voterId?: string | null;
+}
+
+export const updateResident = (id: string, input: UpdateResidentInput) =>
+  apiPost<{ id: string }>(`/api/residents/${id}/update`, input, { csrf: true });
+
+export const deleteResident = (id: string) =>
+  apiPost<void>(`/api/residents/${id}/delete`, undefined, { csrf: true });
+
 // --- Households -------------------------------------------------------------
 
 export interface HouseholdSummary {
   id: string;
   referenceNumber: string;
   barangay: string;
+  organizationId: string;
   purok: string | null;
+  houseNumber: string | null;
+  street: string | null;
+  zone: string | null;
   headName: string | null;
   memberCount: number;
   status: string;
@@ -277,8 +378,12 @@ export interface HouseholdDetail {
   id: string;
   referenceNumber: string;
   barangay: string;
+  organizationId: string;
   purok: string | null;
   address: string | null;
+  houseNumber: string | null;
+  street: string | null;
+  zone: string | null;
   housingType: string | null;
   contactPhone: string | null;
   status: string;
@@ -287,19 +392,38 @@ export interface HouseholdDetail {
 
 export interface CreateHouseholdInput {
   organizationId: string;
+  purokId?: string | null;
   address?: string | null;
+  houseNumber?: string | null;
+  street?: string | null;
+  zone?: string | null;
   housingType?: string | null;
+  contactPhone?: string | null;
   headResidentId?: string | null;
 }
 
-export const getHouseholds = (signal?: AbortSignal) =>
-  apiGet<HouseholdSummary[]>("/api/households", signal);
+export const getHouseholds = (organizationId?: string | null, signal?: AbortSignal) =>
+  apiGet<HouseholdSummary[]>(withOrg("/api/households", organizationId), signal);
 
 export const getHousehold = (id: string, signal?: AbortSignal) =>
   apiGet<HouseholdDetail>(`/api/households/${id}`, signal);
 
 export const createHousehold = (input: CreateHouseholdInput) =>
   apiPost<{ id: string; referenceNumber: string }>("/api/households", input, { csrf: true });
+
+export interface UpdateHouseholdInput {
+  houseNumber?: string | null;
+  street?: string | null;
+  zone?: string | null;
+  housingType?: string | null;
+  contactPhone?: string | null;
+}
+
+export const updateHousehold = (id: string, input: UpdateHouseholdInput) =>
+  apiPost<{ id: string }>(`/api/households/${id}/update`, input, { csrf: true });
+
+export const deleteHousehold = (id: string) =>
+  apiPost<void>(`/api/households/${id}/delete`, undefined, { csrf: true });
 
 export const addHouseholdMember = (
   householdId: string,
@@ -377,6 +501,88 @@ export const transitionRequest = (
   id: string,
   input: { action: string; remarks?: string | null },
 ) => apiPost<{ status: string }>(`/api/requests/${id}/transition`, input, { csrf: true });
+
+// --- Users (directory for assignee pickers) ---------------------------------
+
+export interface UserSummary {
+  id: string;
+  email: string | null;
+  fullName: string | null;
+  status?: string;
+  barangays?: string[];
+  roles?: string[];
+}
+
+export interface RoleOption {
+  key: string;
+  name: string;
+}
+
+export interface CreateUserInput {
+  email: string;
+  fullName: string;
+  password: string;
+  organizationId: string;
+  roleKey: string;
+}
+
+export const getUsers = (organizationId?: string | null, signal?: AbortSignal) =>
+  apiGet<UserSummary[]>(withOrg("/api/users", organizationId), signal);
+
+export const getUserRoles = (signal?: AbortSignal) =>
+  apiGet<RoleOption[]>("/api/users/roles", signal);
+
+export const createUser = (input: CreateUserInput) =>
+  apiPost<{ id: string }>("/api/users", input, { csrf: true });
+
+// --- Tasks (spec §57) -------------------------------------------------------
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  notes: string | null;
+  status: string;
+  priority: string;
+  dueDate: string | null;
+  assignedToUserId: string | null;
+  assignedToName: string | null;
+  relatedRecordType: string | null;
+  relatedRecordId: string | null;
+  createdAtUtc: string;
+}
+
+export interface CreateTaskInput {
+  organizationId: string;
+  title: string;
+  notes?: string | null;
+  priority?: string | null;
+  dueDate?: string | null;
+  assignedToUserId?: string | null;
+  relatedRecordType?: string | null;
+  relatedRecordId?: string | null;
+}
+
+export const getTasks = (opts?: { status?: string; mine?: boolean }, signal?: AbortSignal) => {
+  const p = new URLSearchParams();
+  if (opts?.status) p.set("status", opts.status);
+  if (opts?.mine) p.set("mine", "true");
+  const q = p.toString();
+  return apiGet<TaskItem[]>(`/api/tasks${q ? `?${q}` : ""}`, signal);
+};
+
+export const createTask = (input: CreateTaskInput) =>
+  apiPost<{ id: string }>("/api/tasks", input, { csrf: true });
+
+export const updateTask = (
+  id: string,
+  input: {
+    status?: string;
+    priority?: string;
+    dueDate?: string | null;
+    assignedToUserId?: string | null;
+    notes?: string | null;
+  },
+) => apiPost<{ status: string }>(`/api/tasks/${id}/update`, input, { csrf: true });
 
 // --- Auth -------------------------------------------------------------------
 

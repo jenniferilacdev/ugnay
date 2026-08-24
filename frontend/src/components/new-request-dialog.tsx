@@ -46,7 +46,7 @@ export function NewRequestDialog() {
     queryKey: ["organizations", "flat", "Barangay"],
     queryFn: ({ signal }) => getOrganizations("Barangay", signal),
   });
-  const residents = useQuery({ queryKey: ["residents"], queryFn: ({ signal }) => getResidents(signal) });
+  const residents = useQuery({ queryKey: ["residents"], queryFn: ({ signal }) => getResidents(undefined, signal) });
 
   const mutation = useMutation({
     mutationFn: () =>

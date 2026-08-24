@@ -1,24 +1,31 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getResidents } from "@/lib/api";
+import { useActingScope } from "@/lib/scope-context";
 import { NewResidentDialog } from "@/components/new-resident-dialog";
-import { VerificationBadge } from "@/components/verification-badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { residentColumns } from "./columns";
+
+const SEX_OPTIONS = [
+  { label: "Male", value: "Male" },
+  { label: "Female", value: "Female" },
+  { label: "Unspecified", value: "Unspecified" },
+];
+
+const VERIFICATION_OPTIONS = [
+  { label: "Pending", value: "Pending" },
+  { label: "Verified", value: "Verified" },
+  { label: "Rejected", value: "Rejected" },
+  { label: "Suspended", value: "Suspended" },
+];
 
 export default function ResidentsPage() {
+  const { actingOrgId } = useActingScope();
   const query = useQuery({
-    queryKey: ["residents"],
-    queryFn: ({ signal }) => getResidents(signal),
+    queryKey: ["residents", actingOrgId],
+    queryFn: ({ signal }) => getResidents(actingOrgId, signal),
   });
 
   return (
@@ -33,57 +40,29 @@ export default function ResidentsPage() {
         <NewResidentDialog />
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          {query.isError && (
-            <p className="text-sm text-destructive">Could not load residents.</p>
-          )}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Reference</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Sex</TableHead>
-                <TableHead>Barangay</TableHead>
-                <TableHead>Verification</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {query.isPending && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">Loading…</TableCell>
-                </TableRow>
-              )}
-              {query.data?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
-                    No residents yet. Register the first one.
-                  </TableCell>
-                </TableRow>
-              )}
-              {query.data?.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-mono text-xs">
-                    <Link href={`/residents/${r.id}`} className="hover:text-primary hover:underline">
-                      {r.referenceNumber}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <Link href={`/residents/${r.id}`} className="hover:text-primary hover:underline">
-                      {r.fullName}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{r.sex}</TableCell>
-                  <TableCell>{r.currentBarangay ?? "—"}</TableCell>
-                  <TableCell>
-                    <VerificationBadge status={r.verificationStatus} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {query.isError && (
+        <p className="text-sm text-destructive">Could not load residents.</p>
+      )}
+
+      {query.isPending ? (
+        <Skeleton className="h-64 w-full" />
+      ) : (
+        <DataTable
+          columns={residentColumns}
+          data={query.data ?? []}
+          searchColumnId="fullName"
+          searchPlaceholder="Filter residents…"
+          facets={[
+            { columnId: "sex", title: "Sex", options: SEX_OPTIONS },
+            {
+              columnId: "verificationStatus",
+              title: "Verification",
+              options: VERIFICATION_OPTIONS,
+            },
+          ]}
+          emptyMessage="No residents yet. Register the first one."
+        />
+      )}
     </div>
   );
 }

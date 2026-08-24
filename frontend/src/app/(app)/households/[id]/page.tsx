@@ -51,7 +51,7 @@ function AddMemberDialog({ household }: { household: HouseholdDetail }) {
   const [residentId, setResidentId] = useState("");
   const [relationship, setRelationship] = useState("Son");
 
-  const residents = useQuery({ queryKey: ["residents"], queryFn: ({ signal }) => getResidents(signal) });
+  const residents = useQuery({ queryKey: ["residents"], queryFn: ({ signal }) => getResidents(undefined, signal) });
   const memberResidentIds = new Set(household.members.filter((m) => m.status === "Active").map((m) => m.residentId));
 
   const mutation = useMutation({
@@ -160,8 +160,10 @@ export default function HouseholdDetailPage() {
             <CardHeader><CardTitle className="text-base">Household</CardTitle></CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div><dt className="text-xs text-muted-foreground">House no.</dt><dd className="text-sm">{h.houseNumber ?? "—"}</dd></div>
+                <div><dt className="text-xs text-muted-foreground">Street</dt><dd className="text-sm">{h.street ?? "—"}</dd></div>
+                <div><dt className="text-xs text-muted-foreground">Zone</dt><dd className="text-sm">{h.zone ?? "—"}</dd></div>
                 <div><dt className="text-xs text-muted-foreground">Purok</dt><dd className="text-sm">{h.purok ?? "—"}</dd></div>
-                <div><dt className="text-xs text-muted-foreground">Address</dt><dd className="text-sm">{h.address ?? "—"}</dd></div>
                 <div><dt className="text-xs text-muted-foreground">Housing</dt><dd className="text-sm">{h.housingType ?? "—"}</dd></div>
                 <div><dt className="text-xs text-muted-foreground">Contact</dt><dd className="text-sm">{h.contactPhone ?? "—"}</dd></div>
               </dl>

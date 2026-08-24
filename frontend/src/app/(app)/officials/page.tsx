@@ -2,23 +2,26 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getOfficials } from "@/lib/api";
+import { useActingScope } from "@/lib/scope-context";
 import { NewOfficialDialog } from "@/components/new-official-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { officialColumns } from "./columns";
 
 export default function OfficialsPage() {
+  const { actingOrgId } = useActingScope();
   const query = useQuery({
-    queryKey: ["officials"],
-    queryFn: ({ signal }) => getOfficials(signal),
+    queryKey: ["officials", actingOrgId],
+    queryFn: ({ signal }) => getOfficials(actingOrgId, signal),
   });
+
+  const data = query.data ?? [];
+  const positionOptions = Array.from(
+    new Set(data.map((o) => o.terms[0]?.position).filter(Boolean) as string[]),
+  ).map((p) => ({ label: p, value: p }));
+  const statusOptions = Array.from(new Set(data.map((o) => o.status))).map(
+    (s) => ({ label: s, value: s }),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,56 +35,29 @@ export default function OfficialsPage() {
         <NewOfficialDialog />
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          {query.isError && (
-            <p className="text-sm text-destructive">Could not load officials.</p>
-          )}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Position</TableHead>
-                <TableHead>Barangay</TableHead>
-                <TableHead>Term start</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {query.isPending && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
-              )}
-              {query.data?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
-                    No officials yet. Add the first one.
-                  </TableCell>
-                </TableRow>
-              )}
-              {query.data?.map((o) => {
-                const current = o.terms[0];
-                return (
-                  <TableRow key={o.id}>
-                    <TableCell className="font-medium">{o.fullName}</TableCell>
-                    <TableCell>{current?.position ?? "—"}</TableCell>
-                    <TableCell>{current?.organizationName ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {current?.startDate ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{o.status}</Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {query.isError && (
+        <p className="text-sm text-destructive">Could not load officials.</p>
+      )}
+
+      {query.isPending ? (
+        <Skeleton className="h-64 w-full" />
+      ) : (
+        <DataTable
+          columns={officialColumns}
+          data={data}
+          searchColumnId="fullName"
+          searchPlaceholder="Filter officials…"
+          facets={[
+            ...(positionOptions.length > 1
+              ? [{ columnId: "position", title: "Position", options: positionOptions }]
+              : []),
+            ...(statusOptions.length > 1
+              ? [{ columnId: "status", title: "Status", options: statusOptions }]
+              : []),
+          ]}
+          emptyMessage="No officials yet. Add the first one."
+        />
+      )}
     </div>
   );
 }

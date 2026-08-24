@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 
-import { ApiError, createHousehold, getOrganizations, getResidents } from "@/lib/api";
+import { ApiError, createHousehold, getResidents } from "@/lib/api";
+import { useScopedBarangays } from "@/lib/use-barangays";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,24 +31,31 @@ export function NewHouseholdDialog() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [organizationId, setOrganizationId] = useState("");
-  const [address, setAddress] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
+  const [street, setStreet] = useState("");
+  const [zone, setZone] = useState("");
   const [housingType, setHousingType] = useState("");
   const [headResidentId, setHeadResidentId] = useState("");
 
-  const barangays = useQuery({
-    queryKey: ["organizations", "flat", "Barangay"],
-    queryFn: ({ signal }) => getOrganizations("Barangay", signal),
-  });
+  const { barangays } = useScopedBarangays();
   const residents = useQuery({
     queryKey: ["residents"],
-    queryFn: ({ signal }) => getResidents(signal),
+    queryFn: ({ signal }) => getResidents(undefined, signal),
   });
+
+  // A barangay-level account only has its own barangay — use it implicitly and
+  // hide the picker.
+  const isBarangayScoped = barangays.length === 1;
+  const effectiveOrgId =
+    organizationId || (isBarangayScoped ? barangays[0].id : "");
 
   const mutation = useMutation({
     mutationFn: () =>
       createHousehold({
-        organizationId,
-        address: address || null,
+        organizationId: effectiveOrgId,
+        houseNumber: houseNumber || null,
+        street: street || null,
+        zone: zone || null,
         housingType: housingType || null,
         headResidentId: headResidentId || null,
       }),
@@ -55,7 +63,9 @@ export function NewHouseholdDialog() {
       qc.invalidateQueries({ queryKey: ["households"] });
       setOpen(false);
       setOrganizationId("");
-      setAddress("");
+      setHouseNumber("");
+      setStreet("");
+      setZone("");
       setHousingType("");
       setHeadResidentId("");
     },
@@ -91,29 +101,41 @@ export function NewHouseholdDialog() {
           className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (organizationId) mutation.mutate();
+            if (effectiveOrgId) mutation.mutate();
           }}
         >
-          <div className="flex flex-col gap-2">
-            <Label>Barangay</Label>
-            <Select value={organizationId} onValueChange={(v) => setOrganizationId(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select barangay">
-                  {(value) =>
-                    value ? (barangays.data?.find((b) => b.id === value)?.name ?? "") : "Select barangay"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {barangays.data?.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!isBarangayScoped && (
+            <div className="flex flex-col gap-2">
+              <Label>Barangay</Label>
+              <Select value={organizationId} onValueChange={(v) => setOrganizationId(v ?? "")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select barangay">
+                    {(value) =>
+                      value ? (barangays.find((b) => b.id === value)?.name ?? "") : "Select barangay"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {barangays.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="address">Address</Label>
-            <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="houseNumber">House no.</Label>
+              <Input id="houseNumber" value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="street">Street</Label>
+              <Input id="street" value={street} onChange={(e) => setStreet(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="zone">Zone</Label>
+              <Input id="zone" value={zone} onChange={(e) => setZone(e.target.value)} />
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -147,7 +169,7 @@ export function NewHouseholdDialog() {
 
         <DialogFooter>
           <DialogClose render={<Button variant="outline">Cancel</Button>} />
-          <Button type="submit" form="new-household-form" disabled={!organizationId || mutation.isPending}>
+          <Button type="submit" form="new-household-form" disabled={!effectiveOrgId || mutation.isPending}>
             {mutation.isPending ? "Saving…" : "Create"}
           </Button>
         </DialogFooter>

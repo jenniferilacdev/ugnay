@@ -30,9 +30,17 @@ public class ResidentConfiguration : IEntityTypeConfiguration<Resident>
         builder.Property(r => r.VerificationMethod).HasMaxLength(120);
         builder.Property(r => r.VerificationRemarks).HasMaxLength(1000);
         builder.Property(r => r.ArchivedReason).HasMaxLength(300);
+        builder.Property(r => r.VoterId).HasMaxLength(50);
+        builder.Property(r => r.SoloParentId).HasMaxLength(50);
+        builder.Property(r => r.SeniorCitizenId).HasMaxLength(50);
+        builder.Property(r => r.DisabilityId).HasMaxLength(50);
+        builder.Property(r => r.DisabilityType).HasMaxLength(100);
+        builder.Property(r => r.EmployedType).HasMaxLength(120);
+        builder.Property(r => r.UnemployedType).HasMaxLength(60);
 
         builder.Property(r => r.Sex).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(r => r.CivilStatus).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(r => r.EmploymentStatus).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(r => r.VerificationStatus).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
 
